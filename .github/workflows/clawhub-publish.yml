@@ -1,4 +1,4 @@
-﻿name: publish-to-clawhub
+name: publish-to-clawhub
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '鍙瑙堬紝涓嶇湡姝ｅ彂甯?
+        description: 'Only preview, do not publish'
         type: boolean
         default: true
 
@@ -29,13 +29,12 @@ jobs:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
         run: |
           if [ -z "$CLAWHUB_TOKEN" ]; then
-            echo "::error::缂哄皯浠撳簱 secret CLAWHUB_TOKEN锛岃鍒?Settings 鈫?Secrets and variables 鈫?Actions 娣诲姞"
+            echo "::error::Missing repo secret CLAWHUB_TOKEN. Add it in Settings -> Secrets and variables -> Actions."
             exit 1
           fi
           clawhub login --token "$CLAWHUB_TOKEN" || true
           clawhub skill publish . \
             --slug netease-dynamic-avatar \
-            --name "缃戞槗浜戝姩鎬佸ご鍍? \
+            --name "netease-dynamic-avatar" \
             --categories lifestyle,automation \
             --topics "netease,music-163,avatar,webp,dynamic-avatar"
-        # 鎯冲彧棰勮鏃舵妸涓婇潰鍛戒护鍔?--dry-run
