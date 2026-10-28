@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+pylibs/
+.venv/
+venv/
+
+# 本地测试产物
+*.webp
+!docs/*.webp
+out/
+tmp/
+.pytest_cache/
+
+# 敏感
+.env
+*.local
+token.txt
+cookies.txt
