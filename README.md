@@ -1,6 +1,11 @@
 # netease-dynamic-avatar
 
-> 给**自己的**网易云音乐账号设置**动态头像**（GIF / 动画 WebP）。一个可直接装进 DSH / Claude Code 类 harness 的 skill。
+[![Release](https://img.shields.io/github/v/release/yuan-dev39/netease-dynamic-avatar?color=c20c0c)](https://github.com/yuan-dev39/netease-dynamic-avatar/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DSH skill](https://img.shields.io/badge/DSH-skill-blue)](https://github.com/yuan-dev39/netease-dynamic-avatar)
+[![ClawHub](https://img.shields.io/badge/ClawHub-ready-8a2be2)](https://clawhub.ai/)
+
+> 给**自己的**网易云音乐账号设置**动态头像**（GIF / 动画 WebP）。一个可直接装进 DSH / Claude / 其他 harness 的 agent skill。
 
 **核心结论**：`GIF → WebP → 改名 .jpg` 这套老办法之所以失效，不是因为网易云不支持 WebP，而是网页版「更换头像」上传完**必定**调一次 `/upload/img/op` 做服务端裁切，这个接口会把动图重编码成静态 JPEG，动画帧全部丢掉。
 
@@ -13,41 +18,55 @@
 
 ---
 
-## 安装到 harness
+## 安装
 
-### 方式一：DSH 技能目录（推荐）
+### 一行装（推荐）
+
+Linux / macOS / WSL：
 
 ```bash
-git clone https://github.com/yuan-dev39/netease-dynamic-avatar.git \
-  ~/.dsh/skills/netease-dynamic-avatar
+curl -fsSL https://raw.githubusercontent.com/yuan-dev39/netease-dynamic-avatar/main/install.sh | bash
 ```
 
 Windows PowerShell：
 
 ```powershell
+irm https://raw.githubusercontent.com/yuan-dev39/netease-dynamic-avatar/main/install.ps1 -OutFile $env:TEMP\i.ps1; powershell -ExecutionPolicy Bypass -File $env:TEMP\i.ps1
+```
+
+### git clone
+
+```bash
+git clone https://github.com/yuan-dev39/netease-dynamic-avatar.git ~/.dsh/skills/netease-dynamic-avatar
+```
+
+```powershell
 git clone https://github.com/yuan-dev39/netease-dynamic-avatar.git "$env:USERPROFILE\.dsh\skills\netease-dynamic-avatar"
 ```
+
+### 手动 / 离线
+
+从 [Releases](https://github.com/yuan-dev39/netease-dynamic-avatar/releases) 下载 `netease-dynamic-avatar-v1.0.0.zip`，解压到 `<DSH_HOME>/skills/netease-dynamic-avatar/`。`DSH_HOME` 默认 `~/.dsh`。只要目录里有 `SKILL.md` 就能被识别。
 
 装好后重开一次会话（或刷新 DSH Web GUI），技能会自动出现在技能列表里，输入框旁的技能按钮里也能点选。触发词：
 
 > 网易云动态头像 / 网易云头像动图 / 网易云头像不动 / 更换网易云头像 / GIF 头像 / 动态头像失效
 
-### 方式二：手动放目录
+### 其他 harness
 
-把整个仓库文件夹拷到 `<DSH_HOME>/skills/netease-dynamic-avatar/`，保证目录里有 `SKILL.md` 即可。`DSH_HOME` 默认 `~/.dsh`。
+- **Claude / 其他支持 SKILL.md 的 harness**：把 `SKILL.md` 放到对应 skills 目录，或直接把全文贴进上下文
+- **只想用脚本**：完全不需要技能体系，见下面的「只拿脚本」
 
-### 方式三：Claude Code / 其他 harness
+---
 
-克隆后把 `SKILL.md` 放到你的 skills 目录，或直接把 `SKILL.md` 全文贴给模型当上下文。脚本都是独立可跑的，不依赖技能体系。
-
-### 方式四：只拿脚本，不装技能
+## 只拿脚本（不装技能）
 
 ```bash
 # 1. 动图转动画 WebP（需要 Pillow）
 python -m pip install --no-user --target ./pylibs pillow
 PYTHONPATH=./pylibs python scripts/make_animated_webp.py input.gif out.webp --size 240 --quality 75
 
-# 2. 浏览器 Console 里跑一键脚本，或
+# 2. 浏览器 Console 里跑 set_dynamic_avatar.js，或
 python scripts/upload_nos.py "<token>" "<objectKey>" out.webp image/webp
 ```
 
@@ -162,13 +181,38 @@ console.log(String.fromCharCode(u[0],u[1],u[2],u[3]));  // 期望 RIFF
 netease-dynamic-avatar/
 ├── SKILL.md                        # 技能主文件（harness 读取）
 ├── README.md
+├── install.sh / install.ps1        # 一键安装
 ├── LICENSE
+├── .github/workflows/
+│   └── clawhub-publish.yml         # 打 tag 自动发 ClawHub
 ├── references/
 │   └── protocol.md                 # 完整抓包 / 接口字段 / 逆向记录
 └── scripts/
     ├── make_animated_webp.py       # GIF → 动画 WebP + 结构校验
     ├── set_dynamic_avatar.js       # 浏览器一键脚本（模式 A）
     └── upload_nos.py               # 本地 NOS 直传（模式 B）
+```
+
+---
+
+## 发到 ClawHub
+
+本仓库自带 `.github/workflows/clawhub-publish.yml`，打 tag 就自动发布：
+
+```bash
+git tag v1.0.1 && git push origin v1.0.1
+```
+
+前置：在仓库 `Settings → Secrets and variables → Actions` 添加 `CLAWHUB_TOKEN`。
+
+手动发布：
+
+```bash
+npm i -g clawhub
+clawhub login
+clawhub skill publish . --slug netease-dynamic-avatar --name "网易云动态头像" \
+  --categories lifestyle,automation \
+  --topics "netease,music-163,avatar,webp,animated-webp,dynamic-avatar"
 ```
 
 ---
