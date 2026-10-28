@@ -1,6 +1,13 @@
-# 一键把 netease-dynamic-avatar 装进本机 harness 的技能目录。
-# 用法:  powershell -ExecutionPolicy Bypass -File install.ps1  [-Root <技能根目录>]
-# 默认目标: $env:DSH_HOME\skills  (DSH_HOME 默认 $env:USERPROFILE\.dsh)
+# Install netease-dynamic-avatar into the local harness skills directory.
+#
+# Usage:
+#   powershell -ExecutionPolicy Bypass -File install.ps1
+#   powershell -ExecutionPolicy Bypass -File install.ps1 -Root "D:\my\skills"
+#
+# Default target: $env:DSH_HOME\skills  (DSH_HOME defaults to %USERPROFILE%\.dsh)
+#
+# NOTE: this file is intentionally ASCII-only so Windows PowerShell 5.1
+# parses it correctly regardless of the console code page.
 param(
     [string]$Root = ""
 )
@@ -8,22 +15,24 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repo = "https://github.com/yuan-dev39/netease-dynamic-avatar.git"
+
 if ([string]::IsNullOrWhiteSpace($Root)) {
-    $home_ = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $env:USERPROFILE ".dsh" }
-    $Root = Join-Path $home_ "skills"
+    $base = if ($env:DSH_HOME) { $env:DSH_HOME } else { Join-Path $env:USERPROFILE ".dsh" }
+    $Root = Join-Path $base "skills"
 }
+
 $dest = Join-Path $Root "netease-dynamic-avatar"
 
-Write-Host "==> 目标目录: $dest"
+Write-Host "==> target: $dest"
 New-Item -ItemType Directory -Force -Path $Root | Out-Null
 
 if (Test-Path (Join-Path $dest ".git")) {
-    Write-Host "==> 已存在 git 仓库，改为 pull"
+    Write-Host "==> existing git repo, pulling"
     git -C $dest pull --ff-only
 }
 elseif (Test-Path $dest) {
     $bak = "$dest.bak." + [int][double]::Parse((Get-Date -UFormat %s))
-    Write-Host "==> 已存在同名目录但不是 git 仓库，备份到 $bak"
+    Write-Host "==> existing non-git folder, backing up to $bak"
     Move-Item -LiteralPath $dest -Destination $bak
     git clone --depth 1 $repo $dest
 }
@@ -32,13 +41,13 @@ else {
 }
 
 if (-not (Test-Path (Join-Path $dest "SKILL.md"))) {
-    Write-Error "安装失败：$dest\SKILL.md 不存在"
+    Write-Host "ERROR: $dest\SKILL.md not found - install failed" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
-Write-Host "OK 装好了: $dest"
-Write-Host "   重开一次会话（或刷新 harness 的 Web GUI）即可在技能列表里看到 netease-dynamic-avatar"
+Write-Host "OK installed: $dest" -ForegroundColor Green
+Write-Host "   Restart your session (or reload the harness Web GUI) to pick up the skill."
 Write-Host ""
-Write-Host "可选：转码脚本需要 Pillow"
+Write-Host "Optional - the converter script needs Pillow:"
 Write-Host "   python -m pip install --no-user --target `"$dest\pylibs`" pillow"
