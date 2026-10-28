@@ -1,0 +1,40 @@
+name: publish-to-clawhub
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只预览，不真正发布'
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ClawHub CLI
+        run: npm i -g clawhub
+
+      - name: Publish skill
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          if [ -z "$CLAWHUB_TOKEN" ]; then
+            echo "::error::缺少仓库 secret CLAWHUB_TOKEN，请到 Settings → Secrets and variables → Actions 添加"
+            exit 1
+          fi
+          clawhub login --token "$CLAWHUB_TOKEN" || true
+          clawhub skill publish . \
+            --slug netease-dynamic-avatar \
+            --name "网易云动态头像" \
+            --categories lifestyle,automation \
+            --topics "netease,music-163,avatar,webp,animated-webp,dynamic-avatar"
